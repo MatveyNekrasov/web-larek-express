@@ -1,17 +1,12 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { faker } from '@faker-js/faker';
 
-import orderSchema from '../models/order';
+import InternalServerError from '../errors/internal-server-error';
 import Product from '../models/product';
+import BadRequestError from '../errors/bad-request-error';
 
-const createOrder = async (req: Request, res: Response) => {
+const createOrder = async (req: Request, res: Response, next: NextFunction) => {
   const { total, items } = req.body;
-
-  // Валидация входных данных
-  const { error } = orderSchema.validate(req.body);
-  if (error) {
-    return res.status(400).send({ error: error.details[0].message });
-  }
 
   try {
     // Подсчет количества каждого товара
@@ -23,13 +18,13 @@ const createOrder = async (req: Request, res: Response) => {
     // Проверка существования товаров
     const products = await Product.find({ _id: { $in: items } });
     if (products.length !== Object.keys(itemCounts).length) {
-      return res.status(400).send({ error: 'Один или несколько товаров не найдены' });
+      return next(new BadRequestError('Один или несколько товаров не найдены'));
     }
 
     // Проверка, что все товары продаются
     for (let i = 0; i < products.length; i += 1) {
       if (products[i].price === null) {
-        return res.status(400).send({ error: `Товар ${products[i].title} не для продажи` });
+        return next(new BadRequestError(`Товар ${products[i].title} не для продажи`));
       }
     }
 
@@ -40,13 +35,14 @@ const createOrder = async (req: Request, res: Response) => {
     }, 0);
 
     if (totalPrice !== total) {
-      return res.status(400).send({ error: 'Ошибка в стоимости заказа' });
+      return next(new BadRequestError('Ошибка в стоимости заказа'));
     }
 
     res.send({ id: faker.string.uuid(), total: totalPrice });
   } catch (err) {
-    res.status(500).send({ error: 'Internal Server Error' });
+    return next(new InternalServerError('Internal Server Error'));
   }
+
   return -1;
 };
 
