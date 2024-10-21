@@ -1,10 +1,10 @@
 import { NextFunction, Request, Response } from 'express';
 import ConflictError from '../errors/conflict-error';
 import Product from '../models/product';
-import InternalServerError from '../errors/internal-server-error';
 
-export const getProducts = (_req: Request, res: Response) => Product.find({})
-  .then((products) => res.send({ items: products, total: products.length }));
+export const getProducts = (_req: Request, res: Response, next: NextFunction) => Product.find({})
+  .then((products) => res.send({ items: products, total: products.length }))
+  .catch((err) => next(err));
 
 export const createProduct = (req: Request, res: Response, next: NextFunction) => {
   const {
@@ -25,6 +25,6 @@ export const createProduct = (req: Request, res: Response, next: NextFunction) =
         return next(new ConflictError('Товар с таким заголовком уже существует'));
       }
 
-      return next(new InternalServerError('Internal Server Error'));
+      return next(err);
     });
 };

@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
 import path from 'path';
@@ -30,4 +30,9 @@ app.use(errors());
 app.use(errorHandler);
 
 app.use(express.static(path.join(__dirname, './public')));
+
+app.use('*', (_req: Request, res: Response) => {
+  res.status(404).json({ message: 'Запрашиваемый ресурс не найден' });
+});
+
 app.listen(PORT, () => { console.log(`listening on port ${PORT}`, DB_ADDRESS); });

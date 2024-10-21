@@ -1,7 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { faker } from '@faker-js/faker';
 
-import InternalServerError from '../errors/internal-server-error';
 import Product from '../models/product';
 import BadRequestError from '../errors/bad-request-error';
 
@@ -40,9 +39,9 @@ const createOrder = async (req: Request, res: Response, next: NextFunction) => {
 
     res.send({ id: faker.string.uuid(), total: totalPrice });
   } catch (err) {
-    return next(new InternalServerError('Internal Server Error'));
+    return next(err);
   }
-
+  // если убрать return, линтер выдает ошибку, что стрелочная ф-ия должна возвращать рез-т
   return -1;
 };
 
